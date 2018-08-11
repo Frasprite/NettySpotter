@@ -17,22 +17,18 @@ class NettyLocalCache(
     /**
      * Insert a list of public toilets in the database, on a background thread.
      */
-    fun insert(nettys: List<Netty>, insertFinished: ()-> Unit) {
+    fun insert(nettyList: List<Netty>, insertFinished: ()-> Unit) {
         ioExecutor.execute {
-            Log.d("NettyLocalCache", "inserting ${nettys.size} toilets")
-            nettyDao.insert(nettys)
+            Log.d("NettyLocalCache", "inserting ${nettyList.size} toilets")
+            nettyDao.insert(nettyList)
             insertFinished()
         }
     }
 
     /**
-     * Request a LiveData<List<Netty>> from the DAO, based on a specific field TODO.
-     *
-     * @param name the search we are looking for
+     * Request a LiveData<List<Netty>> from the DAO.
      */
-    fun nettysByName(name: String): DataSource.Factory<Int, Netty> {
-        // appending '%' so we can allow other characters to be before and after the query string
-        val query = "%${name.replace(' ', '%')}%"
-        return nettyDao.nettysByName(query)
+    fun loadAllNetties(): DataSource.Factory<Int, Netty> {
+        return nettyDao.loadAllNetties()
     }
 }

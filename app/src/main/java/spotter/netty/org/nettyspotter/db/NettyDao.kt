@@ -20,8 +20,7 @@ interface NettyDao {
     // Do a similar query as the search API:
     // Look for public toilets that contain the query string in the name or in the description
     // and order those results descending, by the number of stars and then by name
-    @Query("SELECT * FROM nettys WHERE (datasetId LIKE :queryString) OR (recordId LIKE " +
-            ":queryString)")
-    fun nettysByName(queryString: String): DataSource.Factory<Int, Netty>
+    @Query("SELECT * FROM netties")
+    fun loadAllNetties(): DataSource.Factory<Int, Netty>
 
 }

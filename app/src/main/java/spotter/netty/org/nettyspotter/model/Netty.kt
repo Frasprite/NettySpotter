@@ -1,10 +1,7 @@
 package spotter.netty.org.nettyspotter.model
 
-import android.arch.persistence.room.Embedded
 import android.arch.persistence.room.Entity
 import android.arch.persistence.room.PrimaryKey
-
-import com.google.gson.annotations.SerializedName
 
 /**
  * Immutable model class for a public toilet (AKA netty).
@@ -12,9 +9,18 @@ import com.google.gson.annotations.SerializedName
  * with the serialized name.
  * This class also defines the Room nettys table, where the netty [id] is the primary key.
  */
-@Entity(tableName = "nettys")
-data class Netty(@field:SerializedName("datasetid") val datasetId: String,
-                 @PrimaryKey @field:SerializedName("recordid") val recordId: String,
-                 @Embedded(prefix = "fields") val fields: Fields,
-                 @Embedded(prefix = "geometry") val geometry: Geometry,
-                 @field:SerializedName("record_timestamp") val recordTimestamp: String)
+@Entity(tableName = "netties")
+data class Netty(val datasetId: String,
+                 @PrimaryKey val recordId: String,
+                 val type: String,
+                 val longitude: Float,
+                 val latitude: Float,
+                 val recordTimestamp: String,
+                 val objectId: Int,
+                 val source: String,
+                 val district: String,
+                 val streetName: String,
+                 val manager: String,
+                 val number: String,
+                 val toiletId: String,
+                 val openHours: String)

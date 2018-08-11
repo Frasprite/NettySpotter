@@ -1,6 +1,5 @@
 package spotter.netty.org.nettyspotter
 
-import android.arch.lifecycle.LiveData
 import android.arch.persistence.room.Room
 import android.support.test.InstrumentationRegistry
 
@@ -11,15 +10,11 @@ import org.junit.Before
 import org.junit.Test
 
 import spotter.netty.org.nettyspotter.db.NettyDatabase
-import spotter.netty.org.nettyspotter.model.Coordinates
-import spotter.netty.org.nettyspotter.model.Fields
-import spotter.netty.org.nettyspotter.model.Geometry
 import spotter.netty.org.nettyspotter.model.Netty
 
 class ComicDAOTest {
 
     private lateinit var appDatabase: NettyDatabase
-    private lateinit var comic: LiveData<Netty>
 
     @Before
     fun setUp() {
@@ -37,7 +32,7 @@ class ComicDAOTest {
     @Test
     fun loadNettyTest() {
         val dao = appDatabase.nettysDao()
-        val entry = dao.nettysByName("qwerty")
+        val entry = dao.loadAllNetties()
         Assert.assertNotNull(entry)
 
         entry.map { Assert.assertNull(it) }
@@ -46,11 +41,9 @@ class ComicDAOTest {
     @Test
     fun insertNettyTest() {
         // Simulating entry insertion
-        val fields = Fields(123, "dasd", "asdf", "asdf",
-                "asdf", "er", "asdf", "poer")
-        val coordinates = Coordinates(2234.0, 1243.0)
-        val geometry = Geometry("asdf", coordinates)
-        val netty = Netty("asd", "asd45", fields, geometry, "poere")
+        val netty = Netty("asd", "asd45", "poere", 0f, 0f,
+                "asdfasd", 666, "typto", "portrt", "poerew",
+                "dpfoere", "epriep", "po12", "poqwqw")
         val toilets: MutableList<Netty> = mutableListOf(netty)
         val data: List<Netty> = toilets
         appDatabase.nettysDao().insert(data)

@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Netty spotter</string>
+
+    <string name="image_list">Image of list item</string>
+
+    <string name="no_results">No results 😓</string>
+    <string name="loading">Loading</string>
+    <string name="unknown">\?</string>
+    <string name="district">District %1$s</string>
+    <string name="complete_address">%1$s, %2$s</string>
 </resources>

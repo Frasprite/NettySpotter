@@ -8,4 +8,5 @@
     <string name="unknown">\?</string>
     <string name="district">District %1$s</string>
     <string name="complete_address">%1$s, %2$s</string>
+    <string name="search_with_map">Search on map</string>
 </resources>

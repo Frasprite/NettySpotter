@@ -1,5 +1,6 @@
 package spotter.netty.org.nettyspotter.ui
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
@@ -14,13 +15,18 @@ import android.widget.TextView
 import android.widget.Toast
 import android.location.LocationManager
 
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
+import com.google.maps.android.SphericalUtil
 
 import spotter.netty.org.nettyspotter.R
 
@@ -38,6 +44,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private val mDefaultZoom = 17
     private var mLocationPermissionGranted: Boolean = false
     private val mPermissionsRequestAccessFineLocation = 1
+    private lateinit var mFusedLocationClient: FusedLocationProviderClient
 
     // The geographical location where the device is currently located.
     // That is, the last-known location retrieved by the Fused Location Provider.
@@ -52,6 +59,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         }
 
         setContentView(R.layout.activity_maps)
+
+        getLocationPermission()
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         val mapFragment = supportFragmentManager.findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
@@ -77,7 +87,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 // If request is cancelled, the result arrays are empty.
                 if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     mLocationPermissionGranted = true
-                    updateLocationUI()
+
+                    // Get current location
+                    getLocation()
+                } else {
+                    Toast.makeText(this, R.string.location_permission_needed, Toast.LENGTH_LONG).show()
                 }
             }
         }
@@ -90,6 +104,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onResume()
     }
 
+    /**
+     * Support method which is used to alert user about GPS status.
+     */
     private fun checkGPSStatus() {
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
@@ -160,6 +177,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         if (ContextCompat.checkSelfPermission(this.applicationContext,
                         android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             mLocationPermissionGranted = true
+
+            // Get current location
+            getLocation()
         } else {
             ActivityCompat.requestPermissions(this,
                     arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION),
@@ -179,10 +199,42 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                 mMap.isMyLocationEnabled = false
                 mMap.uiSettings.isMyLocationButtonEnabled = false
                 mLastKnownLocation = null
-                getLocationPermission()
             }
         } catch (e: SecurityException) {
             Log.e("MapsActivity", "updateLocationUI - Exception: ${e.message}")
         }
+    }
+
+    /**
+     * Method which compute the user location (if permission are granted) and evaluate a bounds from it.
+     */
+    @SuppressLint("MissingPermission")
+    private fun getLocation() {
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+        mFusedLocationClient.lastLocation
+                .addOnSuccessListener { location : Location? ->
+                    // Got last known location (in some rare situations this can be null)
+                    Log.v("MapsActivity", "Location ${location?.latitude} ${location?.longitude}")
+
+                    if (location != null) {
+                        // Calculate radius from center (1000 meters)
+                        toBounds(LatLng(location.latitude, location.longitude), 1000.0)
+                    }
+                }
+    }
+
+    /**
+     * Support method used to calculate a bounds from a position.
+     */
+    private fun toBounds(center: LatLng, radiusInMeters: Double): LatLngBounds {
+        val distanceFromCenterToCorner = radiusInMeters * Math.sqrt(2.0)
+        val southwestCorner = SphericalUtil.computeOffset(center, distanceFromCenterToCorner, 225.0)
+        val northeastCorner = SphericalUtil.computeOffset(center, distanceFromCenterToCorner, 45.0)
+
+        val result = LatLngBounds(southwestCorner, northeastCorner)
+        Log.v("MapsActivity", "Result:\nNorthEast is ${result.northeast.latitude} ${result.northeast.longitude}" +
+                "\nSouthWest is ${result.southwest.latitude} ${result.southwest.longitude}")
+
+        return result
     }
 }

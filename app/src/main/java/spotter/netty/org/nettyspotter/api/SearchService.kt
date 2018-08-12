@@ -64,8 +64,8 @@ fun searchNetties(
                                 }
 
                                 nettyList.add(Netty(record.datasetid, record.recordid,
-                                        record.geometry.type, record.geometry.coordinates[1],
-                                        record.geometry.coordinates[0], record.recordTimestamp,
+                                        record.geometry.type, record.geometry.coordinates[0],
+                                        record.geometry.coordinates[1], record.recordTimestamp,
                                         record.fields.objectid, record.fields.source,
                                         record.fields.arrondissement, record.fields.nomVoie,
                                         record.fields.gestionnaire, streetNumber,

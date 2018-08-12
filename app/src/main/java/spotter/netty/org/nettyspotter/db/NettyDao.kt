@@ -20,8 +20,8 @@ interface NettyDao {
     @Query("SELECT * FROM netties")
     fun loadAllNetties(): DataSource.Factory<Int, Netty>
 
-    @Query("SELECT * FROM netties WHERE (longitude AND latitude) BETWEEN (:northLongitude AND :southLongitude) AND (:northLatitude AND :southLatitude)")
-    fun loadCloserNetties(northLongitude: Double, northLatitude: Double,
-                          southLongitude: Double, southLatitude: Double): List<Netty>
+    @Query("SELECT * FROM netties WHERE longitude <= :northLongitude AND longitude >= :southLongitude AND latitude <= :northLatitude AND latitude >= :southLatitude")
+    fun loadCloserNetties(northLatitude: Double, northLongitude: Double,
+                          southLatitude: Double, southLongitude: Double): List<Netty>
 
 }

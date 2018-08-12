@@ -2,7 +2,7 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <item
-        android:id="@+id/map"
+        android:id="@+id/openMap"
         android:title="@string/search_with_map"
         android:icon="@drawable/ic_map"
         app:showAsAction="ifRoom" />

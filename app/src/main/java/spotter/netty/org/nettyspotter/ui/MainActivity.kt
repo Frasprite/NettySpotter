@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         Log.d("MainActivity", "onOptionsItemSelected - ${item.title} pressed")
         return when (item.itemId) {
-            R.id.map -> {
+            R.id.openMap -> {
                 // Opening activity with map
                 val mapIntent = Intent(this@MainActivity, MapsActivity::class.java)
                 startActivity(mapIntent)

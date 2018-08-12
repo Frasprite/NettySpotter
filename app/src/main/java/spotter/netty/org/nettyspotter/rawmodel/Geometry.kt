@@ -9,5 +9,5 @@ data class Geometry(
         var type: String,
         @SerializedName("coordinates")
         @Expose
-        var coordinates: List<Float>
+        var coordinates: List<Double>
 )

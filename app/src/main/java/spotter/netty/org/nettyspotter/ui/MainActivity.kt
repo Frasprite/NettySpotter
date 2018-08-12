@@ -3,13 +3,17 @@ package spotter.netty.org.nettyspotter.ui
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
 import android.arch.paging.PagedList
+import android.content.Intent
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
 
 import kotlinx.android.synthetic.main.activity_main.*
+import kotlinx.android.synthetic.main.activity_maps.*
 
 import spotter.netty.org.nettyspotter.Injection
 import spotter.netty.org.nettyspotter.R
@@ -32,6 +36,25 @@ class MainActivity : AppCompatActivity() {
         initAdapter()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.menu_main, menu)
+
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        Log.d("MainActivity", "onOptionsItemSelected - ${item.title} pressed")
+        return when (item.itemId) {
+            R.id.openMap -> {
+                // Opening activity with map
+                val mapIntent = Intent(this@MainActivity, MapsActivity::class.java)
+                startActivity(mapIntent)
+                true
+            }
+            else -> super.onOptionsItemSelected(item)
+        }
+    }
+
     private fun initAdapter() {
         list.adapter = adapter
 
@@ -42,7 +65,7 @@ class MainActivity : AppCompatActivity() {
         })
 
         viewModel.networkErrors.observe(this, Observer<String> {
-            Toast.makeText(this, "\uD83D\uDE28 Wooops ${it}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "\uD83D\uDE28 Wooops $it", Toast.LENGTH_LONG).show()
         })
 
         viewModel.loadNetties()

@@ -28,7 +28,10 @@ import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.maps.android.SphericalUtil
 
+import org.jetbrains.anko.doAsync
+
 import spotter.netty.org.nettyspotter.R
+import spotter.netty.org.nettyspotter.db.NettyDatabase
 
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -213,14 +216,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         mFusedLocationClient.lastLocation
                 .addOnSuccessListener { location : Location? ->
-                    // Got last known location (in some rare situations this can be null)
-                    Log.v("MapsActivity", "Location ${location?.latitude} ${location?.longitude}")
-
                     if (location != null) {
-                        // Calculate radius from center (1000 meters)
+                        Log.v("MapsActivity", "Found location ${location.latitude} ${location.longitude}")
+                        // Calculate radius from center of last known location (1000 meters)
                         toBounds(LatLng(location.latitude, location.longitude), 1000.0)
+                    } else {
+                        Log.v("MapsActivity", "Taking default location ${mDefaultLocation.latitude} ${mDefaultLocation.longitude}")
+                        // Calculate radius from default center location (1000 meters)
+                        val result = toBounds(LatLng(mDefaultLocation.latitude, mDefaultLocation.longitude), 1000.0)
+
+                        doAsync {
+                            val loadCloserNetties = NettyDatabase.getInstance(this@MapsActivity).nettysDao().loadCloserNetties(result.northeast.latitude, result.northeast.longitude,
+                                    result.southwest.latitude, result.southwest.longitude)
+
+                            Log.d("MapsActivity", "Total closer netties ${loadCloserNetties.size}")
+                        }
                     }
                 }
+
     }
 
     /**

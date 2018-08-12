@@ -26,7 +26,7 @@ class NettyLocalCache(
     }
 
     /**
-     * Request a LiveData<List<Netty>> from the DAO.
+     * Load all netties from database.
      */
     fun loadAllNetties(): DataSource.Factory<Int, Netty> {
         return nettyDao.loadAllNetties()

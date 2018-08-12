@@ -41,12 +41,25 @@ class ComicDAOTest {
     @Test
     fun insertNettyTest() {
         // Simulating entry insertion
-        val netty = Netty("asd", "asd45", "poere", 0f, 0f,
+        val netty = Netty("asd", "asd45", "poere", 0.0, 0.0,
                 "asdfasd", 666, "typto", "portrt", "poerew",
                 "dpfoere", "epriep", "po12", "poqwqw")
         val toilets: MutableList<Netty> = mutableListOf(netty)
         val data: List<Netty> = toilets
         appDatabase.nettysDao().insert(data)
+    }
+
+    @Test
+    fun loadCloserNettiesTest() {
+        // Default location : LatLng(48.856667, 2.351944)
+        // NorthEast is Lat 48.865659395343435 Lng 2.36561508124438
+        // SouthWest is Lat 48.847672988997694 Lng 2.338277829983431
+        val dao = appDatabase.nettysDao()
+        val entry = dao.loadCloserNetties(2.36561508124438, 48.865659395343435,
+                2.338277829983431, 48.847672988997694)
+        Assert.assertNotNull(entry)
+
+        entry.map { Assert.assertNull(it) }
     }
 
     @After

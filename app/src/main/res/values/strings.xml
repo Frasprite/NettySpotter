@@ -10,4 +10,7 @@
     <string name="complete_address">%1$s, %2$s</string>
     <string name="search_with_map">Search on map</string>
     <string name="location_permission_needed">Sorry, we need location permission to continue!</string>
+    <string name="netties_not_found">Sorry, it seems that no data is available on database!</string>
+    <string name="gps_enabled">GPS is enabled!</string>
+    <string name="gps_not_enabled">GPS NOT enabled!</string>
 </resources>

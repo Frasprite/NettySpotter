@@ -12,7 +12,6 @@ import android.util.Log
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.TextView
-import android.widget.Toast
 import android.location.LocationManager
 
 import com.google.android.gms.location.FusedLocationProviderClient
@@ -22,13 +21,12 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.LatLngBounds
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.*
 import com.google.maps.android.SphericalUtil
 
 import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.toast
+import org.jetbrains.anko.uiThread
 
 import spotter.netty.org.nettyspotter.R
 import spotter.netty.org.nettyspotter.db.NettyDatabase
@@ -44,7 +42,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     // A default location (Paris, France) and default zoom to use when location permission is
     // not granted.
     private val mDefaultLocation = LatLng(48.856667, 2.351944)
-    private val mDefaultZoom = 17
+    private val mDefaultZoom = 15
     private var mLocationPermissionGranted: Boolean = false
     private val mPermissionsRequestAccessFineLocation = 1
     private lateinit var mFusedLocationClient: FusedLocationProviderClient
@@ -94,7 +92,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
                     // Get current location
                     getLocation()
                 } else {
-                    Toast.makeText(this, R.string.location_permission_needed, Toast.LENGTH_LONG).show()
+                    toast(R.string.location_permission_needed)
                 }
             }
         }
@@ -114,9 +112,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
 
         if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
-            Toast.makeText(this, "GPS is enabled in your device", Toast.LENGTH_SHORT).show()
+            toast(R.string.gps_enabled)
         } else {
-            Toast.makeText(this, "GPS NOT enabled!", Toast.LENGTH_LONG).show()
+            toast(R.string.gps_not_enabled)
         }
     }
 
@@ -155,13 +153,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
             }
         })
 
-        // Add a marker in Paris and move the camera
-        val somewhere = LatLng(48.8668198774, 2.35272664515)
-        mMap.addMarker(MarkerOptions().position(somewhere).title("Marker in Paris!").snippet("Awesome place: everyone, get in here!"))
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(somewhere))
-
         // Zoom to place
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(somewhere, mDefaultZoom.toFloat()))
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(mDefaultLocation, mDefaultZoom.toFloat()))
 
         // Turn on the My Location layer and the related control on the map
         updateLocationUI()
@@ -216,24 +209,65 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         mFusedLocationClient.lastLocation
                 .addOnSuccessListener { location : Location? ->
-                    if (location != null) {
-                        Log.v("MapsActivity", "Found location ${location.latitude} ${location.longitude}")
-                        // Calculate radius from center of last known location (1000 meters)
-                        toBounds(LatLng(location.latitude, location.longitude), 1000.0)
-                    } else {
-                        Log.v("MapsActivity", "Taking default location ${mDefaultLocation.latitude} ${mDefaultLocation.longitude}")
-                        // Calculate radius from default center location (1000 meters)
-                        val result = toBounds(LatLng(mDefaultLocation.latitude, mDefaultLocation.longitude), 1000.0)
+                    /* For test purpose, set finalLocation as default one! */
+                    //val finalLocation = mDefaultLocation
 
-                        doAsync {
-                            val loadCloserNetties = NettyDatabase.getInstance(this@MapsActivity).nettysDao().loadCloserNetties(result.northeast.latitude, result.northeast.longitude,
-                                    result.southwest.latitude, result.southwest.longitude)
+                    // If for some reason location is null, use default location (Paris)
+                    val finalLocation =  if (location != null) LatLng(location.latitude, location.longitude) else mDefaultLocation
 
-                            Log.d("MapsActivity", "Total closer netties ${loadCloserNetties.size}")
+                    Log.v("MapsActivity", "getLocation - Location ${finalLocation.latitude} ${finalLocation.longitude}")
+                    // Calculate radius from center of last known location (1000 meters)
+                    val result = toBounds(finalLocation, 1000.0)
+
+                    doAsync {
+                        val closerNetties = NettyDatabase
+                                .getInstance(this@MapsActivity)
+                                .nettysDao()
+                                .loadCloserNetties(result.northeast.latitude,
+                                        result.northeast.longitude,
+                                        result.southwest.latitude,
+                                        result.southwest.longitude)
+
+                        Log.d("MapsActivity", "Total closer netties ${closerNetties.size}")
+
+                        if (closerNetties.isNotEmpty()) {
+                            val markerList: ArrayList<MarkerOptions> = ArrayList()
+                            // Create marker in background
+                            for (netty in closerNetties) {
+                                val somewhere = LatLng(netty.latitude, netty.longitude)
+                                markerList.add(
+                                        MarkerOptions()
+                                                .position(somewhere)
+                                                .title("Netty")
+                                                .snippet(netty.district + "\n${netty.streetName} ${netty.number}\n${netty.openHours}!")
+                                                .icon(BitmapDescriptorFactory
+                                                        .defaultMarker(BitmapDescriptorFactory.HUE_AZURE)))
+                            }
+
+                            uiThread {
+                                addMarkersToMap(markerList)
+
+                                // Zoom to place
+                                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(finalLocation, mDefaultZoom.toFloat()))
+                            }
+                        } else {
+                            uiThread {
+                                toast(R.string.netties_not_found)
+                            }
                         }
                     }
                 }
 
+    }
+
+    /**
+     * Method used to add all marker loaded from database.
+     */
+    private fun addMarkersToMap(markerList: ArrayList<MarkerOptions>) {
+        Log.v("MapsActivity", "addMarkersToMap - Start adding ${markerList.size} netties")
+        for (marker in markerList) {
+            mMap.addMarker(marker)
+        }
     }
 
     /**
@@ -245,8 +279,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         val northeastCorner = SphericalUtil.computeOffset(center, distanceFromCenterToCorner, 45.0)
 
         val result = LatLngBounds(southwestCorner, northeastCorner)
-        Log.v("MapsActivity", "Result:\nNorthEast is ${result.northeast.latitude} ${result.northeast.longitude}" +
-                "\nSouthWest is ${result.southwest.latitude} ${result.southwest.longitude}")
+        Log.v("MapsActivity", "toBounds - Result:\nNorthEast is ${result.northeast.latitude} ${result.northeast.longitude}" +
+                "\nSouthWest is ${result.southwest.latitude} ${result.southwest.longitude}" +
+                "\nCenter is ${center.latitude} ${center.longitude}")
 
         return result
     }
